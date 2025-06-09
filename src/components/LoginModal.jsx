@@ -1,8 +1,41 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { motion } from 'framer-motion';
 
+const API_BASE_URL = 'http://43.201.19.93:8000'; // FastAPI 서버 주소
+
 export default function LoginModal({ onClose, onSignupClick }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleLogin = async () => {
+    if (!isValidEmail || !password) {
+      alert('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+        email,
+        password,
+      });
+
+      const accessToken = response.data?.access_token;
+      if (accessToken) {
+        localStorage.setItem('access_token', accessToken); // 로그인 토큰 저장
+        alert('로그인 성공!');
+        onClose();
+      } else {
+        alert('로그인 실패: 토큰이 없습니다.');
+      }
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      alert(`로그인 실패: ${detail || error.message}`);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -25,6 +58,8 @@ export default function LoginModal({ onClose, onSignupClick }) {
         <input
           type="email"
           placeholder="이메일 주소"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="w-full border border-gray-300 p-2 rounded mb-4"
         />
 
@@ -32,6 +67,8 @@ export default function LoginModal({ onClose, onSignupClick }) {
           <input
             type={showPassword ? 'text' : 'password'}
             placeholder="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full border border-gray-300 p-2 rounded"
           />
           <span
@@ -44,7 +81,7 @@ export default function LoginModal({ onClose, onSignupClick }) {
 
         <button
           className="w-full bg-blue-600 text-white font-semibold py-2 rounded mb-6 hover:bg-blue-700"
-          onClick={() => alert('로그인 클릭')}
+          onClick={handleLogin}
         >
           로그인
         </button>
@@ -53,7 +90,7 @@ export default function LoginModal({ onClose, onSignupClick }) {
         <div className="grid grid-cols-1 gap-3">
           {/* Google */}
           <button
-            onClick={() => alert('구글 로그인')}
+            onClick={() => window.location.href = `${API_BASE_URL}/auth/google/login`}
             className="flex items-center justify-center border rounded py-2 hover:bg-gray-50"
           >
             <img

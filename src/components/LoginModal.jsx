@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 const API_BASE_URL = "http://43.201.19.93:8000"; // FastAPI 서버 주소
 

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Link, Element } from 'react-scroll';
-import Sidebar from './components/Sidebar';
-import LoginModal from './components/LoginModal';
-import SignupModal from './components/SignupModal';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Link, Element } from "react-scroll";
+import Sidebar from "./components/Sidebar";
+import LoginModal from "./components/LoginModal";
+import SignupModal from "./components/SignupModal";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState("");
 
   return (
     <div className="relative min-h-screen bg-gray-50 flex">
@@ -31,7 +31,11 @@ function App() {
       )}
 
       {/* 메인 콘텐츠 */}
-      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div
+        className={`flex-1 transition-all duration-300 ${
+          sidebarOpen ? "ml-64" : "ml-0"
+        }`}
+      >
         {/* Hero 섹션 */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -61,11 +65,33 @@ function App() {
 
               {/* 아이콘 */}
               <div className="absolute bottom-4 left-4 flex space-x-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m2 6H7a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 00.707-.293l.707-.707a1 1 0 011.414 0l.707.707A1 1 0 0013.414 5H16a2 2 0 012 2v9a2 2 0 01-2 2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5 text-gray-400 hover:text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h6m2 6H7a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 00.707-.293l.707-.707a1 1 0 011.414 0l.707.707A1 1 0 0013.414 5H16a2 2 0 012 2v9a2 2 0 01-2 2z"
+                  />
                 </svg>
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v4m0 14v4m8-12a8 8 0 01-16 0M4 10a8 8 0 0116 0" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5 text-gray-400 hover:text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 1v4m0 14v4m8-12a8 8 0 01-16 0M4 10a8 8 0 0116 0"
+                  />
                 </svg>
               </div>
 
@@ -75,8 +101,19 @@ function App() {
                 onClick={() => alert(`요약 요청: ${url}`)}
               >
                 <span>요약하기</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
                 </svg>
               </button>
             </div>
@@ -88,8 +125,19 @@ function App() {
               className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer"
               whileHover={{ scale: 1.1 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </motion.div>
           </Link>
@@ -106,7 +154,8 @@ function App() {
           >
             <h2 className="text-purple-500 font-semibold text-sm">요약</h2>
             <p className="text-lg text-center font-medium">
-              한 눈에 파악하기 어려운 영상은<br /> 텍스트 요약으로 빠르게 파악해보세요
+              한 눈에 파악하기 어려운 영상은
+              <br /> 텍스트 요약으로 빠르게 파악해보세요
             </p>
             <div className="w-[320px] h-[180px] bg-gray-300 rounded-xl shadow-xl" />
           </motion.section>
@@ -123,7 +172,8 @@ function App() {
           >
             <h2 className="text-indigo-500 font-semibold text-sm">마인드맵</h2>
             <p className="text-lg text-center font-medium">
-              중요 포인트만 연결해 보여주는<br /> 마인드맵 기능
+              중요 포인트만 연결해 보여주는
+              <br /> 마인드맵 기능
             </p>
             <div className="grid grid-cols-3 gap-3">
               {Array.from({ length: 9 }).map((_, i) => (

@@ -1,28 +1,29 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
 
-const API_BASE_URL = 'http://43.201.19.93:8000'; // 실제 FastAPI 서버 주소
+const API_BASE_URL = "http://43.201.19.93:8000"; // 실제 FastAPI 서버 주소
 
 export default function SignupModal({ onClose, onLoginClick }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [authCode, setAuthCode] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [authCode, setAuthCode] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
 
-  const isPasswordMatch = password && confirmPassword && password === confirmPassword;
+  const isPasswordMatch =
+    password && confirmPassword && password === confirmPassword;
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSendVerification = async () => {
     if (!isValidEmail) {
-      alert('올바른 이메일 주소를 입력해주세요.');
+      alert("올바른 이메일 주소를 입력해주세요.");
       return;
     }
 
     if (!isPasswordMatch) {
-      alert('비밀번호가 일치하지 않습니다.');
+      alert("비밀번호가 일치하지 않습니다.");
       return;
     }
 
@@ -38,7 +39,9 @@ export default function SignupModal({ onClose, onLoginClick }) {
     } catch (error) {
       const detail = error.response?.data?.detail;
       if (Array.isArray(detail)) {
-        const messages = detail.map(d => `${d.loc?.join('.')}: ${d.msg}`).join('\n');
+        const messages = detail
+          .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
+          .join("\n");
         alert(`회원가입 실패:\n${messages}`);
       } else {
         alert(`회원가입 실패: ${detail || error.message}`);
@@ -48,7 +51,7 @@ export default function SignupModal({ onClose, onLoginClick }) {
 
   const handleSignupConfirm = async () => {
     if (!authCode) {
-      alert('인증 코드를 입력해주세요.');
+      alert("인증 코드를 입력해주세요.");
       return;
     }
 
@@ -58,7 +61,7 @@ export default function SignupModal({ onClose, onLoginClick }) {
         code: authCode,
       });
 
-      alert('회원가입 완료! 로그인 후 사용해주세요.');
+      alert("회원가입 완료! 로그인 후 사용해주세요.");
       setShowModal(false);
       onClose();
     } catch (error) {
@@ -93,7 +96,9 @@ export default function SignupModal({ onClose, onLoginClick }) {
             className="w-full border border-gray-300 p-2 rounded mb-2"
           />
           {!isValidEmail && email && (
-            <div className="text-red-500 text-sm mb-2">올바른 이메일 주소가 아닙니다.</div>
+            <div className="text-red-500 text-sm mb-2">
+              올바른 이메일 주소가 아닙니다.
+            </div>
           )}
 
           <input
@@ -112,8 +117,14 @@ export default function SignupModal({ onClose, onLoginClick }) {
             className="w-full border border-gray-300 p-2 rounded mb-2"
           />
           {confirmPassword && (
-            <div className={`text-sm mb-2 ${isPasswordMatch ? 'text-green-600' : 'text-red-500'}`}>
-              {isPasswordMatch ? '비밀번호가 일치합니다.' : '비밀번호가 일치하지 않습니다.'}
+            <div
+              className={`text-sm mb-2 ${
+                isPasswordMatch ? "text-green-600" : "text-red-500"
+              }`}
+            >
+              {isPasswordMatch
+                ? "비밀번호가 일치합니다."
+                : "비밀번호가 일치하지 않습니다."}
             </div>
           )}
 
@@ -147,10 +158,14 @@ export default function SignupModal({ onClose, onLoginClick }) {
 
           {!codeSent && (
             <>
-              <div className="text-center text-sm text-gray-500 my-4">또는 SNS로 회원가입</div>
+              <div className="text-center text-sm text-gray-500 my-4">
+                또는 SNS로 회원가입
+              </div>
               <div className="grid grid-cols-1 gap-3 mb-4">
                 <button
-                  onClick={() => (window.location.href = `${API_BASE_URL}/auth/google/login`)}
+                  onClick={() =>
+                    (window.location.href = `${API_BASE_URL}/auth/google/login`)
+                  }
                   className="flex items-center justify-center border rounded py-2 hover:bg-gray-50"
                 >
                   <img
@@ -162,7 +177,7 @@ export default function SignupModal({ onClose, onLoginClick }) {
                 </button>
 
                 <button
-                  onClick={() => alert('애플 회원가입')}
+                  onClick={() => alert("애플 회원가입")}
                   className="flex items-center justify-center border rounded py-2 hover:bg-gray-50"
                 >
                   <img
@@ -177,8 +192,11 @@ export default function SignupModal({ onClose, onLoginClick }) {
           )}
 
           <div className="mt-4 text-center text-sm text-gray-500">
-            이미 계정이 있으신가요?{' '}
-            <button onClick={onLoginClick} className="text-indigo-500 hover:underline">
+            이미 계정이 있으신가요?{" "}
+            <button
+              onClick={onLoginClick}
+              className="text-indigo-500 hover:underline"
+            >
               로그인
             </button>
           </div>
@@ -188,9 +206,12 @@ export default function SignupModal({ onClose, onLoginClick }) {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 shadow-lg text-center">
-            <p className="mb-2 font-semibold">이메일 인증만 하면 가입이 완료됩니다.</p>
+            <p className="mb-2 font-semibold">
+              이메일 인증만 하면 가입이 완료됩니다.
+            </p>
             <p className="text-sm text-gray-600 mb-4">
-              인증 이메일이 <span className="font-medium">{email}</span> 에 발송되었어요.
+              인증 이메일이 <span className="font-medium">{email}</span> 에
+              발송되었어요.
               <br />
               이메일을 인증한 후 다시 로그인하면 사용하실 수 있어요!
             </p>

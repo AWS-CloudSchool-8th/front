@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
 
-const API_BASE_URL = 'http://43.201.19.93:8000'; // FastAPI 서버 주소
+const API_BASE_URL = "http://43.201.19.93:8000"; // FastAPI 서버 주소
 
 export default function LoginModal({ onClose, onSignupClick }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleLogin = async () => {
     if (!isValidEmail || !password) {
-      alert('이메일과 비밀번호를 모두 입력해주세요.');
+      alert("이메일과 비밀번호를 모두 입력해주세요.");
       return;
     }
 
@@ -25,11 +25,11 @@ export default function LoginModal({ onClose, onSignupClick }) {
 
       const accessToken = response.data?.access_token;
       if (accessToken) {
-        localStorage.setItem('access_token', accessToken); // 로그인 토큰 저장
-        alert('로그인 성공!');
+        localStorage.setItem("access_token", accessToken); // 로그인 토큰 저장
+        alert("로그인 성공!");
         onClose();
       } else {
-        alert('로그인 실패: 토큰이 없습니다.');
+        alert("로그인 실패: 토큰이 없습니다.");
       }
     } catch (error) {
       const detail = error.response?.data?.detail;
@@ -65,7 +65,7 @@ export default function LoginModal({ onClose, onSignupClick }) {
 
         <div className="relative mb-6">
           <input
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             placeholder="비밀번호"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -75,7 +75,7 @@ export default function LoginModal({ onClose, onSignupClick }) {
             onClick={() => setShowPassword(!showPassword)}
             className="absolute top-2.5 right-3 text-sm text-gray-500 cursor-pointer"
           >
-            {showPassword ? '숨기기' : '보기'}
+            {showPassword ? "숨기기" : "보기"}
           </span>
         </div>
 
@@ -86,11 +86,15 @@ export default function LoginModal({ onClose, onSignupClick }) {
           로그인
         </button>
 
-        <div className="text-center text-sm text-gray-500 mb-4">또는 SNS로 로그인</div>
+        <div className="text-center text-sm text-gray-500 mb-4">
+          또는 SNS로 로그인
+        </div>
         <div className="grid grid-cols-1 gap-3">
           {/* Google */}
           <button
-            onClick={() => window.location.href = `${API_BASE_URL}/auth/google/login`}
+            onClick={() =>
+              (window.location.href = `${API_BASE_URL}/auth/google/login`)
+            }
             className="flex items-center justify-center border rounded py-2 hover:bg-gray-50"
           >
             <img
@@ -103,7 +107,7 @@ export default function LoginModal({ onClose, onSignupClick }) {
 
           {/* Apple */}
           <button
-            onClick={() => alert('애플 로그인')}
+            onClick={() => alert("애플 로그인")}
             className="flex items-center justify-center border rounded py-2 hover:bg-gray-50"
           >
             <img

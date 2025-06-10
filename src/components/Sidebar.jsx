@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 
 const Sidebar = ({ isOpen, onClose, onLoginClick }) => {
   return (
     <div
       className={`fixed top-0 left-0 h-full w-64 bg-white shadow-md z-40 transform transition-transform duration-300 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
+        isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       {/* 사이드바 상단 */}

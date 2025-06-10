@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
+import jwtDecode from "jwt-decode";
 
 const API_BASE_URL = "http://43.201.19.93:8000"; // FastAPI 서버 주소
 
-export default function LoginModal({ onClose, onSignupClick }) {
+export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,14 +24,26 @@ export default function LoginModal({ onClose, onSignupClick }) {
         password,
       });
 
-      const accessToken = response.data?.access_token;
-      if (accessToken) {
-        localStorage.setItem("access_token", accessToken); // 로그인 토큰 저장
-        alert("로그인 성공!");
-        onClose();
-      } else {
+      // access, id 토큰 둘 다 꺼내기
+      const { access_token: accessToken, id_token: idToken } = response.data;
+
+      if (!accessToken || !idToken) {
         alert("로그인 실패: 토큰이 없습니다.");
+        return;
       }
+
+      // idToken 디코딩해서 사용자 정보 추출
+      const decoded = jwtDecode(idToken);
+      const user = {
+        username: decoded["cognito:username"],
+        email: decoded.email,
+      };
+
+      // 1) 로컬 스토리지에 저장 (선택)
+      localStorage.setItem("access_token", accessToken);
+
+      // 2) 부모 콜백 호출 → Context에 setUser, 모달 닫기 등 처리
+      onLoginSuccess({ accessToken, user });
     } catch (error) {
       const detail = error.response?.data?.detail;
       alert(`로그인 실패: ${detail || error.message}`);

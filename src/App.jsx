@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import { Link, Element } from "react-scroll";
 import Sidebar from "./components/Sidebar";
 import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
+import { UserContext } from "./contexts/UserContext";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
   const [url, setUrl] = useState("");
+  const { setUser } = useContext(UserContext);
 
   return (
     <div className="relative min-h-screen bg-gray-50 flex">
@@ -191,6 +193,16 @@ function App() {
           onSignupClick={() => {
             setLoginOpen(false);
             setSignupOpen(true);
+          }}
+          // ② 로그인 성공 시 호출될 콜백을 넘깁니다
+          onLoginSuccess={({ accessToken, user }) => {
+            console.log("로그인 성공, user:", user);
+            // 토큰 저장
+            localStorage.setItem("access_token", accessToken);
+            // Context에 저장 → Sidebar가 업데이트됩니다
+            setUser(user);
+            // 모달 닫기
+            setLoginOpen(false);
           }}
         />
       )}

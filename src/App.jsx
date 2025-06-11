@@ -1,17 +1,42 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { motion } from "framer-motion";
 import { Link, Element } from "react-scroll";
 import Sidebar from "./components/Sidebar";
 import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
 import { UserContext } from "./contexts/UserContext";
+import { jwtDecode } from "jwt-decode";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
   const [url, setUrl] = useState("");
-  const { setUser } = useContext(UserContext);
+  const { user, setUser } = useContext(UserContext);
+
+  useEffect(() => {
+    const token = localStorage.getItem("id_token"); // ✅ id_token 사용
+
+    if (token && !user) {
+      try {
+        const decoded = jwtDecode(token);
+        setUser({
+          username: decoded["cognito:username"],
+          email: decoded.email,
+        });
+      } catch (err) {
+        console.error("토큰 디코딩 실패:", err);
+        localStorage.removeItem("access_token"); // 에러 시 토큰 제거
+        localStorage.removeItem("id_token");
+      }
+    }
+  }, [setUser, user]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("id_token");
+    setUser(null);
+  };
 
   return (
     <div className="relative min-h-screen bg-gray-50 flex">
@@ -20,8 +45,8 @@ function App() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onLoginClick={() => setLoginOpen(true)}
+        onLogout={handleLogout}
       />
-
       {/* 토글 버튼 */}
       {!sidebarOpen && (
         <button
@@ -31,7 +56,6 @@ function App() {
           ☰
         </button>
       )}
-
       {/* 메인 콘텐츠 */}
       <div
         className={`flex-1 transition-all duration-300 ${
@@ -185,7 +209,6 @@ function App() {
           </motion.section>
         </Element>
       </div>
-
       {/* 로그인 모달 */}
       {loginOpen && (
         <LoginModal
@@ -195,8 +218,9 @@ function App() {
             setSignupOpen(true);
           }}
           // ② 로그인 성공 시 호출될 콜백을 넘깁니다
-          onLoginSuccess={({ accessToken, user }) => {
+          onLoginSuccess={({ accessToken, idToken, user }) => {
             console.log("로그인 성공, user:", user);
+            localStorage.setItem("id_token", idToken);
             // 토큰 저장
             localStorage.setItem("access_token", accessToken);
             // Context에 저장 → Sidebar가 업데이트됩니다
@@ -206,7 +230,6 @@ function App() {
           }}
         />
       )}
-
       {/* 회원가입 모달 */}
       {signupOpen && (
         <SignupModal

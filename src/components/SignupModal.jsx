@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
-const API_BASE_URL = "http://43.201.19.93:8000"; // 실제 FastAPI 서버 주소
+const API_BASE_URL = "http://43.201.55.116:8000"; // 실제 FastAPI 서버 주소
 
 export default function SignupModal({ onClose, onLoginClick }) {
   const [email, setEmail] = useState("");
@@ -205,14 +205,15 @@ export default function SignupModal({ onClose, onLoginClick }) {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 shadow-lg text-center">
+          <div className="bg-white rounded-lg p-6 w-[28rem] shadow-lg text-center">
             <p className="mb-2 font-semibold">
               이메일 인증만 하면 가입이 완료됩니다.
             </p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-1">
               인증 이메일이 <span className="font-medium">{email}</span> 에
               발송되었어요.
-              <br />
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
               이메일을 인증한 후 다시 로그인하면 사용하실 수 있어요!
             </p>
             <button

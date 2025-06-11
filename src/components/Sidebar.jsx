@@ -1,9 +1,9 @@
-// src/components/Sidebar.jsx
 import React, { useContext } from "react";
 import { UserContext } from "../contexts/UserContext";
 
-const Sidebar = ({ isOpen, onClose, onLoginClick }) => {
-  const { user } = useContext(UserContext); // ① Context에서 user 꺼내기
+// ✅ onLogout을 props로 받도록 추가
+const Sidebar = ({ isOpen, onClose, onLoginClick, onLogout }) => {
+  const { user } = useContext(UserContext);
 
   return (
     <div
@@ -21,12 +21,20 @@ const Sidebar = ({ isOpen, onClose, onLoginClick }) => {
           ☰
         </button>
 
-        {/* ② 로그인 상태면 사용자 정보 */}
+        {/* 로그인 상태면 사용자 정보 */}
         {user && (
           <div className="mt-4">
             <p className="text-sm text-gray-500">안녕하세요,</p>
             <p className="text-lg font-semibold">{user.username}님</p>
             <p className="text-sm text-gray-600">{user.email}</p>
+
+            {/* ✅ 로그아웃 버튼은 로그인 상태일 때만 보여야 함 */}
+            <button
+              onClick={onLogout}
+              className="mt-4 w-full bg-gray-300 text-black py-2 rounded"
+            >
+              로그아웃
+            </button>
           </div>
         )}
       </div>
@@ -39,7 +47,7 @@ const Sidebar = ({ isOpen, onClose, onLoginClick }) => {
         <li>내 지식</li>
         <li>❓ 도움말</li>
 
-        {/* ③ 로그인 안 된 상태에서만 로그인 버튼 */}
+        {/* 로그인 안 된 상태에서만 로그인 버튼 */}
         {!user && (
           <li>
             <button

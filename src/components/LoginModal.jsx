@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 
-const API_BASE_URL = "http://43.201.19.93:8000"; // FastAPI 서버 주소
+const API_BASE_URL = "http://43.201.55.116:8000"; // FastAPI 서버 주소
 
 export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
   const [email, setEmail] = useState("");
@@ -41,9 +41,10 @@ export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
 
       // 1) 로컬 스토리지에 저장 (선택)
       localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("id_token", idToken);
 
       // 2) 부모 콜백 호출 → Context에 setUser, 모달 닫기 등 처리
-      onLoginSuccess({ accessToken, user });
+      onLoginSuccess({ accessToken, idToken, user });
     } catch (error) {
       const detail = error.response?.data?.detail;
       alert(`로그인 실패: ${detail || error.message}`);

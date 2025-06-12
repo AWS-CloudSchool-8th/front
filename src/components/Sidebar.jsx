@@ -1,9 +1,11 @@
 import React, { useContext } from "react";
 import { UserContext } from "../contexts/UserContext";
+import { useNavigate } from "react-router-dom";
 
 // ✅ onLogout을 props로 받도록 추가
 const Sidebar = ({ isOpen, onClose, onLoginClick, onLogout }) => {
   const { user } = useContext(UserContext);
+  const navigate = useNavigate();
 
   return (
     <div
@@ -41,7 +43,17 @@ const Sidebar = ({ isOpen, onClose, onLoginClick, onLogout }) => {
 
       {/* 메뉴 항목 */}
       <ul className="p-4 space-y-4 text-sm">
-        <li>홈</li>
+        <li>
+          <button
+            onClick={() => {
+              navigate("/"); // 홈으로 이동
+              onClose(); // 사이드바 닫기
+            }}
+            className="w-full text-left hover:text-blue-600"
+          >
+            홈
+          </button>
+        </li>
         <li>검색</li>
         <li>최근</li>
         <li>내 지식</li>
@@ -64,3 +76,4 @@ const Sidebar = ({ isOpen, onClose, onLoginClick, onLogout }) => {
 };
 
 export default Sidebar;
+

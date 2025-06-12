@@ -5,7 +5,12 @@ import { jwtDecode } from "jwt-decode";
 
 const API_BASE_URL = "http://43.201.55.116:8000"; // FastAPI 서버 주소
 
-export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
+export default function LoginModal({
+  onClose,
+  onSignupClick,
+  onLoginSuccess,
+  warningMessage = "",
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -69,11 +74,21 @@ export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
 
         <h2 className="text-2xl font-bold text-center mb-6">로그인</h2>
 
+        {warningMessage && (
+          <div className="text-red-500 text-sm text-center mb-4">
+            {warningMessage}
+          </div>
+        )}
+
         <input
           type="email"
           placeholder="이메일 주소"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleLogin(); // ⬅️ Enter 시 로그인 실행
+          }}
           className="w-full border border-gray-300 p-2 rounded mb-4"
         />
 
@@ -83,6 +98,9 @@ export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
             placeholder="비밀번호"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleLogin(); // ⬅️ 여기에도 추가
+            }}
             className="w-full border border-gray-300 p-2 rounded"
           />
           <span
@@ -146,3 +164,4 @@ export default function LoginModal({ onClose, onSignupClick, onLoginSuccess }) {
     </div>
   );
 }
+

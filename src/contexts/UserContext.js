@@ -1,11 +1,28 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 
-// Context »ý¼º
 export const UserContext = createContext();
 
-// Context Provider ÄÄÆ÷³ÍÆ®
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // »ç¿ëÀÚ »óÅÂ ÃÊ±âÈ­
+  const [user, setUser] = useState(null);
+
+  // ¿ ¿¿ ¿ ¿¿¿¿¿¿¿¿ ¿¿¿ ¿¿ ¿¿
+  useEffect(() => {
+    const idToken = localStorage.getItem("id_token");
+    if (idToken) {
+      try {
+        const decoded = jwtDecode(idToken);
+        const restoredUser = {
+          username: decoded["cognito:username"],
+          email: decoded.email,
+        };
+        setUser(restoredUser);
+      } catch (error) {
+        console.error("¿¿ ¿¿¿ ¿¿:", error);
+        setUser(null);
+      }
+    }
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

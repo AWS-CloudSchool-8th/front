@@ -8,7 +8,6 @@ import { UserContext } from "../contexts/UserContext";
 import { jwtDecode } from "jwt-decode";
 import { SummaryContext } from "../contexts/SummaryContext";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,6 +17,7 @@ function App() {
   const { user, setUser } = useContext(UserContext);
   const { setSummaryData } = useContext(SummaryContext);
   const navigate = useNavigate();
+  const [loginWarning, setLoginWarning] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("id_token"); // ✅ id_token 사용
@@ -130,6 +130,12 @@ function App() {
               <button
                 className="absolute bottom-3 right-4 flex items-center space-x-1 bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-4 py-1.5 rounded-full"
                 onClick={async () => {
+                  if (!user) {
+                    setLoginWarning(true); // 경고 메시지 ON
+                    setLoginOpen(true); // 로그인 모달 열기
+                    return;
+                  }
+
                   if (!url.trim()) return alert("URL을 입력해주세요");
 
                   try {
@@ -138,7 +144,7 @@ function App() {
                       setTimeout(() => {
                         resolve({
                           data: {
-                            summary: `������ 요약 결과입니다!\n\n입력하신 링크: ${url}\n이건 백엔드 없이 테스트하는 중입니다.`,
+                            summary: `요약 결과입니다!\n\n입력하신 링크: ${url}\n이건 백엔드 없이 테스트하는 중입니다.`,
                           },
                         });
                       }, 1000)
@@ -238,20 +244,24 @@ function App() {
       {/* 로그인 모달 */}
       {loginOpen && (
         <LoginModal
-          onClose={() => setLoginOpen(false)}
+          warningMessage={
+            loginWarning ? "서비스 이용하려면 로그인해주세요." : ""
+          }
+          onClose={() => {
+            setLoginOpen(false);
+            setLoginWarning(false); // 모달 닫을 때 경고도 초기화
+          }}
           onSignupClick={() => {
             setLoginOpen(false);
             setSignupOpen(true);
+            setLoginWarning(false);
           }}
-          // ② 로그인 성공 시 호출될 콜백을 넘깁니다
           onLoginSuccess={({ accessToken, idToken, user }) => {
-            console.log("로그인 성공, user:", user);
             localStorage.setItem("id_token", idToken);
             localStorage.setItem("access_token", accessToken);
-            // Context에 저장 → Sidebar가 업데이트됩니다
             setUser(user);
-            // 모달 닫기
             setLoginOpen(false);
+            setLoginWarning(false);
           }}
         />
       )}
@@ -270,3 +280,4 @@ function App() {
 }
 
 export default App;
+

@@ -12,13 +12,35 @@ export default function SignupModal({ onClose, onLoginClick }) {
   const [showModal, setShowModal] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
 
-  const isPasswordMatch =
-    password && confirmPassword && password === confirmPassword;
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const checkPasswordRules = (password) => {
+    return {
+      length: password.length >= 8,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[^\w\s]/.test(password), // 특수문자 및 공백 제외
+    };
+  };
+
+  const passwordRules = checkPasswordRules(password);
+  const isPasswordValid = Object.values(passwordRules).every(Boolean);
+
+  const isPasswordMatch =
+    password &&
+    confirmPassword &&
+    password === confirmPassword &&
+    isPasswordValid;
 
   const handleSendVerification = async () => {
     if (!isValidEmail) {
       alert("올바른 이메일 주소를 입력해주세요.");
+      return;
+    }
+
+    if (!isPasswordValid) {
+      alert("비밀번호가 규칙에 맞지 않습니다.");
       return;
     }
 
@@ -29,8 +51,8 @@ export default function SignupModal({ onClose, onLoginClick }) {
 
     try {
       await axios.post(`${API_BASE_URL}/auth/signup`, {
-        email: email,
-        password: password,
+        email,
+        password,
         password_confirm: confirmPassword,
       });
 
@@ -57,7 +79,7 @@ export default function SignupModal({ onClose, onLoginClick }) {
 
     try {
       await axios.post(`${API_BASE_URL}/auth/confirm`, {
-        email: email,
+        email,
         code: authCode,
       });
 
@@ -109,6 +131,47 @@ export default function SignupModal({ onClose, onLoginClick }) {
             className="w-full border border-gray-300 p-2 rounded mb-2"
           />
 
+          {/* 비밀번호 규칙 피드백 */}
+          {password && (
+            <div className="text-sm mb-2 space-y-1">
+              <p
+                className={
+                  passwordRules.length ? "text-green-600" : "text-red-500"
+                }
+              >
+                • 8자 이상
+              </p>
+              <p
+                className={
+                  passwordRules.upper ? "text-green-600" : "text-red-500"
+                }
+              >
+                • 대문자 1개 이상
+              </p>
+              <p
+                className={
+                  passwordRules.lower ? "text-green-600" : "text-red-500"
+                }
+              >
+                • 소문자 1개 이상
+              </p>
+              <p
+                className={
+                  passwordRules.number ? "text-green-600" : "text-red-500"
+                }
+              >
+                • 숫자 1개 이상
+              </p>
+              <p
+                className={
+                  passwordRules.special ? "text-green-600" : "text-red-500"
+                }
+              >
+                • 특수문자 1개 이상
+              </p>
+            </div>
+          )}
+
           <input
             type="password"
             placeholder="비밀번호 확인"
@@ -132,7 +195,7 @@ export default function SignupModal({ onClose, onLoginClick }) {
             <button
               className="w-full bg-indigo-600 text-white font-semibold py-2 rounded mb-4 hover:bg-indigo-700"
               onClick={handleSendVerification}
-              disabled={!isPasswordMatch || !isValidEmail}
+              disabled={!isPasswordMatch || !isValidEmail || !isPasswordValid}
             >
               인증 이메일 보내기
             </button>
@@ -228,3 +291,4 @@ export default function SignupModal({ onClose, onLoginClick }) {
     </>
   );
 }
+

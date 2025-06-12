@@ -18,6 +18,14 @@ function App() {
   const { setSummaryData } = useContext(SummaryContext);
   const navigate = useNavigate();
   const [loginWarning, setLoginWarning] = useState(false);
+  const isValidURL = (input) => {
+    try {
+      const url = new URL(input);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch (_) {
+      return false;
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("id_token"); // ✅ id_token 사용
@@ -131,15 +139,16 @@ function App() {
                 className="absolute bottom-3 right-4 flex items-center space-x-1 bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-4 py-1.5 rounded-full"
                 onClick={async () => {
                   if (!user) {
-                    setLoginWarning(true); // 경고 메시지 ON
-                    setLoginOpen(true); // 로그인 모달 열기
+                    setLoginWarning(true);
+                    setLoginOpen(true);
                     return;
                   }
 
                   if (!url.trim()) return alert("URL을 입력해주세요");
+                  if (!isValidURL(url.trim()))
+                    return alert("올바른 URL 형식이 아닙니다.");
 
                   try {
-                    // ⚠️ 실제 백엔드 대신 가짜 응답 사용
                     const fakeResponse = await new Promise((resolve) =>
                       setTimeout(() => {
                         resolve({

@@ -4,13 +4,13 @@ import { UserContext } from "../contexts/UserContext";
 import LoginModal from "../components/LoginModal";
 import { useLocation, useNavigate } from "react-router-dom";
 
-export default function MainLayout({ children }) {
+export default function MainLayout({ children, rightButtons }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const { setUser } = useContext(UserContext);
 
-  const location = useLocation(); // 현재 페이지 경로
-  const navigate = useNavigate(); // 리다이렉트용
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -18,7 +18,6 @@ export default function MainLayout({ children }) {
     setUser(null);
     alert("로그아웃 되었습니다.");
 
-    // 결과페이지에서만 홈으로 이동
     if (location.pathname === "/result") {
       navigate("/");
     }
@@ -26,7 +25,7 @@ export default function MainLayout({ children }) {
 
   return (
     <div className="relative min-h-screen bg-white flex">
-      {/* ☰ 버튼: 사이드바 닫혀 있을 때만 보여줌 */}
+      {/* ☰ 버튼 */}
       {!sidebarOpen && (
         <button
           className="fixed top-4 left-4 z-50 p-2 text-2xl bg-white rounded shadow-md"
@@ -34,6 +33,13 @@ export default function MainLayout({ children }) {
         >
           ☰
         </button>
+      )}
+
+      {/* ✅ 상단 헤더 우측 버튼 (페이지별로 조건부 삽입) */}
+      {rightButtons && (
+        <div className="absolute top-4 left-1/2 z-40 w-full max-w-4xl -translate-x-1/2 px-4 flex justify-end gap-2">
+          {rightButtons}
+        </div>
       )}
 
       {/* 사이드바 */}
@@ -47,16 +53,17 @@ export default function MainLayout({ children }) {
       {/* 메인 콘텐츠 */}
       <div className="flex-1 p-10">{children}</div>
 
-      {/* 로그인 모달 렌더링 */}
+      {/* 로그인 모달 */}
       {loginOpen && (
         <LoginModal
           onClose={() => setLoginOpen(false)}
           onLoginSuccess={(data) => {
-            setUser(data.user); // Context에 저장
-            setLoginOpen(false); // 모달 닫기
+            setUser(data.user);
+            setLoginOpen(false);
           }}
         />
       )}
     </div>
   );
 }
+

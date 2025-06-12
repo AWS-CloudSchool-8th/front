@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
-const API_BASE_URL = "http://43.201.55.116:8000"; // 실제 FastAPI 서버 주소
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export default function SignupModal({ onClose, onLoginClick }) {
   const [email, setEmail] = useState("");

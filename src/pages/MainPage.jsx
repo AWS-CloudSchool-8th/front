@@ -106,30 +106,30 @@ function App() {
               <div className="absolute bottom-4 left-4 flex space-x-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-gray-400 hover:text-gray-600"
                   fill="none"
                   viewBox="0 0 24 24"
+                  strokeWidth={1.5}
                   stroke="currentColor"
-                  strokeWidth={2}
+                  className="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12h6m2 6H7a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 00.707-.293l.707-.707a1 1 0 011.414 0l.707.707A1 1 0 0013.414 5H16a2 2 0 012 2v9a2 2 0 01-2 2z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m-6 3.75 3 3m0 0 3-3m-3 3V1.5m6 9h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"
                   />
                 </svg>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-gray-400 hover:text-gray-600"
                   fill="none"
                   viewBox="0 0 24 24"
+                  strokeWidth={1.5}
                   stroke="currentColor"
-                  strokeWidth={2}
+                  className="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 1v4m0 14v4m8-12a8 8 0 01-16 0M4 10a8 8 0 0116 0"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
                   />
                 </svg>
               </div>

@@ -244,7 +244,7 @@ const Dashboard = () => {
         setLoading(true);
         
         // 백엔드 API를 통해 보고서 목록 가져오기
-        const response = await axios.get('/s3/reports/list');
+        const response = await axios.get('/reports/list');
         console.log('API 응답:', response.data);
         
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {

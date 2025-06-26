@@ -175,19 +175,50 @@ const InputBox = () => {
     if (!token) return false;
     try {
       const decoded = jwtDecode(token);
-      return decoded.exp * 1000 > Date.now();
+      const now = Date.now();
+      const expiry = decoded.exp * 1000;
+      const timeUntilExpiry = expiry - now;
+
+      // 10분(600000ms) 전에 갱신 필요 표시
+      return timeUntilExpiry > 600000;
     } catch {
       return false;
     }
   };
 
   // 로그인 상태 확인
-  const checkLoginStatus = () => {
+  const checkLoginStatus = async () => {
     const token = localStorage.getItem('access_token');
     const valid = isTokenValid(token);
-    setIsLoggedIn(valid);
-    if (!valid && token) {
-      localStorage.removeItem('access_token'); // 만료된 토큰 제거
+    
+    if (valid) {
+      setIsLoggedIn(true);
+    } else if (token) {
+      // 토큰이 만료되었거나 만료 임박한 경우 갱신 시도
+      try {
+        const refreshResponse = await axios.post('/auth/refresh', {
+          refresh_token: localStorage.getItem('refresh_token')
+        });
+        
+        if (refreshResponse.data && refreshResponse.data.access_token) {
+          localStorage.setItem('access_token', refreshResponse.data.access_token);
+          if (refreshResponse.data.refresh_token) {
+            localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
+          }
+          setIsLoggedIn(true);
+        } else {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          setIsLoggedIn(false);
+        }
+      } catch (err) {
+        console.error('토큰 갱신 실패:', err);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setIsLoggedIn(false);
+      }
+    } else {
+      setIsLoggedIn(false);
     }
   };
 
@@ -281,6 +312,13 @@ const InputBox = () => {
             youtube_url: input,
             include_audio: true 
           });
+          
+          // 작업 ID로 진행률 추적
+          const jobId = response.data.job_id;
+          if (jobId) {
+            pollJobStatus(jobId);
+          }
+          
           // 새 작업 시작 후 상태 업데이트
           setTimeout(() => {
             const fetchJobs = async () => {
@@ -313,7 +351,12 @@ const InputBox = () => {
         });
       }
     } catch (err) {
-      setError(err.message || '에러 발생');
+      console.error('API 에러:', err);
+      const errorMessage = err.response?.data?.detail ||
+        err.response?.data?.message ||
+        err.message ||
+        '알 수 없는 오류가 발생했습니다.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -366,6 +409,32 @@ const InputBox = () => {
     }
   };
 
+  const pollJobStatus = async (jobId) => {
+    const interval = setInterval(async () => {
+      try {
+        const status = await axios.get(`/youtube-reporter/jobs/${jobId}/status`);
+        if (status.data.status === 'completed') {
+          clearInterval(interval);
+          // 작업 완료 시 상태 업데이트
+          const fetchJobs = async () => {
+            try {
+              const jobsResponse = await axios.get('/youtube-reporter/jobs');
+              if (jobsResponse.data && jobsResponse.data.jobs) {
+                setYoutubeReporterJobs(jobsResponse.data.jobs.slice(0, 3));
+              }
+            } catch (e) {
+              console.error('작업 상태 업데이트 실패:', e);
+            }
+          };
+          fetchJobs();
+        }
+      } catch (err) {
+        clearInterval(interval);
+        console.error('작업 상태 확인 실패:', err);
+      }
+    }, 3000);
+  };
+
   const getStatusText = (status, message, progress) => {
     if (status === 'processing') {
       return message || `분석 중... ${progress || 0}%`;
@@ -396,32 +465,61 @@ const InputBox = () => {
     const sections = reportData.sections || [];
     const title = reportData.title || result.title || '분석 결과';
     const summary = reportData.summary || reportData.summary_brief || reportData.executive_summary || '';
+    
+    // 요약 섹션이 sections에 있는지 확인
+    const summarySection = sections.find(s => s.id === 'summary_section' || s.title?.includes('요약'));
+    const finalSummary = summary || summarySection?.content || '';
 
     return (
       <div style={{ marginTop: '1rem' }}>
         <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.1rem' }}>{title}</h3>
         
-        {summary && (
+        {finalSummary && (
           <div style={{ marginBottom: '1rem' }}>
             <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>📋 요약</h4>
-            <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>
-              {summary.length > 200 ? summary.substring(0, 200) + '...' : summary}
-            </p>
+            <div style={{ 
+              color: 'rgba(255,255,255,0.9)', 
+              lineHeight: '1.6', 
+              fontSize: '0.9rem',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              padding: '0.5rem',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              {finalSummary.split('\n').map((line, i) => (
+                <p key={i} style={{ margin: '0.5rem 0' }}>{line}</p>
+              ))}
+            </div>
           </div>
         )}
 
-        {sections.length > 0 && sections.slice(0, 2).map((section, index) => (
+        {sections.length > 0 && sections.slice(0, 5).map((section, index) => (
           <div key={index} style={{ marginBottom: '1rem' }}>
             {section.type === 'paragraph' || section.type === 'text' ? (
               <>
                 <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>
                   {section.title || `섹션 ${index + 1}`}
                 </h4>
-                <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>
-                  {section.content && section.content.length > 200 
-                    ? section.content.substring(0, 200) + '...' 
-                    : section.content || '내용 없음'}
-                </p>
+                <div style={{ 
+                  color: 'rgba(255,255,255,0.9)', 
+                  lineHeight: '1.6', 
+                  fontSize: '0.9rem',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  padding: '0.5rem',
+                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: '6px'
+                }}>
+                  {section.content ? (
+                    section.content.split('\n').map((line, i) => (
+                      <p key={i} style={{ margin: '0.3rem 0' }}>{line}</p>
+                    ))
+                  ) : (
+                    <p style={{ color: 'rgba(255,255,255,0.5)' }}>내용 없음</p>
+                  )}
+                </div>
               </>
             ) : section.type === 'visualization' ? (
               <SmartVisualization section={section} />

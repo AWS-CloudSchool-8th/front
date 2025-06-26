@@ -5,6 +5,7 @@ import { FaDownload, FaShare, FaEye, FaCalendarAlt, FaFileAlt, FaPlay, FaSpinner
 import AuroraBackground from './AuroraBackground';
 import TopBar from './TopBar';
 import Footer from './Footer';
+import SmartVisualization from './SmartVisualization';
 import { colors } from '../styles/colors';
 import axios from 'axios';
 
@@ -191,6 +192,17 @@ const ReportsPage = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedReports, setExpandedReports] = useState(new Set());
+
+  const toggleReportExpansion = (reportId) => {
+    const newExpanded = new Set(expandedReports);
+    if (newExpanded.has(reportId)) {
+      newExpanded.delete(reportId);
+    } else {
+      newExpanded.add(reportId);
+    }
+    setExpandedReports(newExpanded);
+  };
 
   // S3에서 보고서 목록 가져오기
   useEffect(() => {

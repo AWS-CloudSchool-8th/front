@@ -112,6 +112,7 @@ const TopBar = () => {
         <LeftSection>
           <Logo onClick={() => navigate('/')}>aurora report</Logo>
           <NavMenu onClick={() => navigate('/dashboard')}>대시보드</NavMenu>
+          <NavMenu onClick={() => navigate('/reports')}>리포트</NavMenu>
           <NavMenu onClick={() => navigate('/editor')}>에디터</NavMenu>
         </LeftSection>
         {user ? (

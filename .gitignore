@@ -53,3 +53,29 @@ Thumbs.db
 # Temporary folders
 tmp/
 temp/
+
+# React specific
+.eslintcache
+
+# Package manager lock files (선택적)
+# package-lock.json
+package-lock.json
+# yarn.lock
+
+# Storybook
+storybook-static/
+
+# Debug logs
+*.tsbuildinfo
+
+# Local Netlify folder
+.netlify
+
+# Vercel
+.vercel
+
+# Firebase
+.firebase/
+
+# Sentry
+.sentryclirc

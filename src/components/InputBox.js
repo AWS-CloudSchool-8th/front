@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import { AiOutlineFileText, AiOutlineClose } from "react-icons/ai";
+import { FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { colors } from "../styles/colors";
 import { useNavigate } from 'react-router-dom';
+import SmartVisualization from './SmartVisualization';
 
 const Container = styled.div`
   width: 100%;
@@ -96,6 +98,60 @@ const RemoveBtn = styled.button`
   }
 `;
 
+const JobsContainer = styled.div`
+  width: 100%;
+  max-width: 600px;
+  margin-top: 2rem;
+`;
+
+const JobCard = styled.div`
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.2);
+`;
+
+const JobHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const JobStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: white;
+`;
+
+const JobUrl = styled.div`
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+`;
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  background: #eaffb7;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: ${props => props.progress}%;
+`;
+
 function extractYoutubeId(url) {
   const regExp = /(?:v=|youtu.be\/)([\w-]{11})/;
   const match = url.match(regExp);
@@ -109,7 +165,49 @@ const InputBox = () => {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [youtubeReporterJobs, setYoutubeReporterJobs] = useState([]);
   const navigate = useNavigate();
+
+  // YouTube Reporter 작업 상태 확인
+  useEffect(() => {
+    const fetchYoutubeReporterJobs = async () => {
+      try {
+        const response = await axios.get('/youtube-reporter/jobs');
+        if (response.data && response.data.jobs) {
+          const jobsWithStatus = await Promise.all(
+            response.data.jobs.slice(0, 3).map(async (job) => { // 최근 3개만
+              if (job.status === 'processing') {
+                try {
+                  const statusResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/status`);
+                  return { ...job, ...statusResponse.data };
+                } catch (e) {
+                  return job;
+                }
+              }
+              
+              if (job.status === 'completed') {
+                try {
+                  const resultResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/result`);
+                  return { ...job, result: resultResponse.data };
+                } catch (e) {
+                  return job;
+                }
+              }
+              
+              return job;
+            })
+          );
+          setYoutubeReporterJobs(jobsWithStatus);
+        }
+      } catch (error) {
+        console.error('YouTube Reporter 작업 확인 실패:', error);
+      }
+    };
+
+    fetchYoutubeReporterJobs();
+    const interval = setInterval(fetchYoutubeReporterJobs, 5000); // 5초마다 확인
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (input) => {
     setLoading(true);
@@ -125,7 +223,25 @@ const InputBox = () => {
         });
       } else if (/^https?:\/\//.test(input)) {
         if (/(youtube\.com|youtu\.be)/.test(input)) {
-          response = await axios.post('/youtube/analysis', { youtube_url: input });
+          // YouTube Reporter 사용
+          response = await axios.post('/youtube-reporter/analyze', { 
+            youtube_url: input,
+            include_audio: true 
+          });
+          // 새 작업 시작 후 상태 업데이트
+          setTimeout(() => {
+            const fetchJobs = async () => {
+              try {
+                const jobsResponse = await axios.get('/youtube-reporter/jobs');
+                if (jobsResponse.data && jobsResponse.data.jobs) {
+                  setYoutubeReporterJobs(jobsResponse.data.jobs.slice(0, 3));
+                }
+              } catch (e) {
+                console.error('작업 상태 업데이트 실패:', e);
+              }
+            };
+            fetchJobs();
+          }, 1000);
         } else {
           response = await axios.post('/youtube/search', { query: input });
         }
@@ -184,6 +300,85 @@ const InputBox = () => {
     setFiles(files.filter((_, i) => i !== index));
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'processing':
+        return <FaSpinner className="animate-spin" color="#eaffb7" />;
+      case 'completed':
+        return <FaCheckCircle color="#10b981" />;
+      case 'failed':
+        return <FaExclamationTriangle color="#ef4444" />;
+      default:
+        return <FaSpinner color="#6b7280" />;
+    }
+  };
+
+  const getStatusText = (status, message, progress) => {
+    if (status === 'processing') {
+      return message || `분석 중... ${progress || 0}%`;
+    }
+    if (status === 'completed') {
+      return '분석 완료';
+    }
+    if (status === 'failed') {
+      return '분석 실패';
+    }
+    return '대기 중';
+  };
+
+  const renderReportContent = (result) => {
+    if (!result || !result.sections) return null;
+
+    return (
+      <div style={{ marginTop: '1rem' }}>
+        {result.title && (
+          <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.1rem' }}>{result.title}</h3>
+        )}
+        
+        {result.summary && (
+          <div style={{ marginBottom: '1rem' }}>
+            <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>📋 요약</h4>
+            <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>{result.summary}</p>
+          </div>
+        )}
+
+        {result.sections.slice(0, 2).map((section, index) => ( // 처음 2개 섹션만 표시
+          <div key={index} style={{ marginBottom: '1rem' }}>
+            {section.type === 'text' ? (
+              <>
+                <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>{section.title}</h4>
+                <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>
+                  {section.content.length > 200 ? section.content.substring(0, 200) + '...' : section.content}
+                </p>
+              </>
+            ) : section.type === 'visualization' ? (
+              <SmartVisualization section={section} />
+            ) : null}
+          </div>
+        ))}
+
+        {result.sections.length > 2 && (
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <button 
+              onClick={() => navigate('/reports')}
+              style={{
+                background: '#eaffb7',
+                color: '#7e7e00',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              전체 리포트 보기
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Container>
       <Box
@@ -224,9 +419,43 @@ const InputBox = () => {
         </label>
         <ArrowButton onClick={handleInput} title="전송">→</ArrowButton>
       </Box>
-      {loading && <div>요청을 처리 중입니다...</div>}
-      {error && <div style={{ color: colors.error }}>{error}</div>}
-      {result && (
+      {loading && <div style={{ color: 'white', marginTop: '1rem' }}>요청을 처리 중입니다...</div>}
+      {error && <div style={{ color: colors.error, marginTop: '1rem' }}>{error}</div>}
+      
+      {/* YouTube Reporter 작업 상태 표시 */}
+      {youtubeReporterJobs.length > 0 && (
+        <JobsContainer>
+          <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.2rem' }}>🎬 YouTube Reporter</h3>
+          {youtubeReporterJobs.map((job) => (
+            <JobCard key={job.id}>
+              <JobHeader>
+                <JobStatus>
+                  {getStatusIcon(job.status)}
+                  {getStatusText(job.status, job.message, job.progress)}
+                </JobStatus>
+              </JobHeader>
+
+              <JobUrl>{job.youtube_url}</JobUrl>
+
+              {job.status === 'processing' && (
+                <ProgressBar>
+                  <ProgressFill progress={job.progress || 0} />
+                </ProgressBar>
+              )}
+
+              {job.status === 'completed' && job.result && renderReportContent(job.result)}
+              
+              {job.status === 'failed' && (
+                <div style={{ color: '#fca5a5', fontSize: '0.9rem' }}>
+                  분석에 실패했습니다. 다시 시도해주세요.
+                </div>
+              )}
+            </JobCard>
+          ))}
+        </JobsContainer>
+      )}
+      
+      {result && !/(youtube\.com|youtu\.be)/.test(inputValue) && (
         <div style={{ color: colors.primary, textAlign: 'left', marginTop: 20 }}>
           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{JSON.stringify(result, null, 2)}</pre>
         </div>

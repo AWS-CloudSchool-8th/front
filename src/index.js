@@ -7,11 +7,14 @@ import YoutubeSearchPage from './components/YoutubeSearchPage';
 import FixedNotionEditor from './components/FixedNotionEditor';
 import Dashboard from './components/Dashboard';
 import AnalysisStatus from './components/AnalysisStatus';
+import ReportsPage from './components/ReportsPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL;
+// API 베이스 URL 설정
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+axios.defaults.baseURL = API_BASE_URL;
 
-console.log('API BASE URL:', process.env.REACT_APP_API_BASE_URL);
+console.log('API BASE URL:', API_BASE_URL);
 
 // Axios 인터셉터: 요청 시 access_token 자동 추가
 axios.interceptors.request.use(config => {
@@ -22,17 +25,44 @@ axios.interceptors.request.use(config => {
   return config;
 });
 
-// Axios 인터셉터: 401 응답 시 로그인 모달 유도 (예시)
+// Axios 인터셉터: 에러 처리 및 토큰 갱신
 axios.interceptors.response.use(
   res => res,
-  err => {
-    if (err.response?.status === 401) {
-      // 로그인 모달 띄우기 (전역 상태/이벤트 활용 필요)
-      // 예시: window.dispatchEvent(new Event('show-login-modal'));
-      // 또는 전역 상태관리(Recoil, Redux 등)로 로그인 모달 상태 변경
-      alert('로그인이 필요합니다.');
-      // location.href = '/login'; // 또는 로그인 페이지로 이동
+  async err => {
+    const originalRequest = err.config;
+    
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // 리프레시 토큰으로 재시도
+      const refreshToken = localStorage.getItem('refresh_token');
+      const email = localStorage.getItem('user_email');
+      
+      if (refreshToken && email) {
+        try {
+          const response = await axios.post('/auth/refresh', {
+            refresh_token: refreshToken,
+            email: email
+          });
+          
+          const newAccessToken = response.data.access_token;
+          localStorage.setItem('access_token', newAccessToken);
+          
+          // 원래 요청 재시도
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return axios(originalRequest);
+        } catch (refreshError) {
+          // 리프레시 실패 시 로그아웃
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user_email');
+          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        }
+      } else {
+        alert('로그인이 필요합니다.');
+      }
     }
+    
     return Promise.reject(err);
   }
 );
@@ -73,6 +103,7 @@ root.render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/youtube-search" element={<PrivateRoute><YoutubeSearchPage /></PrivateRoute>} />
+        <Route path="/reports" element={<PrivateRoute><ReportsPage /></PrivateRoute>} />
         <Route path="/editor" element={<PrivateRoute><FixedNotionEditor /></PrivateRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/analysis/:jobId" element={<PrivateRoute><AnalysisStatus /></PrivateRoute>} />

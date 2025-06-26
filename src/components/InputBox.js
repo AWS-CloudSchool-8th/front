@@ -6,6 +6,7 @@ import { FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa'
 import { colors } from "../styles/colors";
 import { useNavigate } from 'react-router-dom';
 import SmartVisualization from './SmartVisualization';
+import { jwtDecode } from 'jwt-decode';
 
 const Container = styled.div`
   width: 100%;
@@ -166,26 +167,59 @@ const InputBox = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [youtubeReporterJobs, setYoutubeReporterJobs] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // YouTube Reporter 작업 상태 확인 (로그인 상태에서만)
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return; // 로그인하지 않은 경우 API 호출 안함
+  // JWT 토큰 유효성 검사
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    try {
+      const decoded = jwtDecode(token);
+      return decoded.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  };
 
+  // 로그인 상태 확인
+  const checkLoginStatus = () => {
+    const token = localStorage.getItem('access_token');
+    const valid = isTokenValid(token);
+    setIsLoggedIn(valid);
+    if (!valid && token) {
+      localStorage.removeItem('access_token'); // 만료된 토큰 제거
+    }
+  };
+
+  // Storage 이벤트 리스너 (다른 탭에서의 로그인/로그아웃 감지)
+  useEffect(() => {
+    checkLoginStatus();
+    
+    const handleStorageChange = () => {
+      checkLoginStatus();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // YouTube Reporter 작업 상태 확인 (로그인된 사용자만)
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setYoutubeReporterJobs([]); // 로그아웃 시 작업 목록 초기화
+      return;
+    }
+
+    const token = localStorage.getItem('access_token');
     const fetchYoutubeReporterJobs = async () => {
       try {
-        const response = await axios.get('/youtube-reporter/jobs', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.get('/youtube-reporter/jobs');
         if (response.data && response.data.jobs) {
           const jobsWithStatus = await Promise.all(
             response.data.jobs.slice(0, 3).map(async (job) => { // 최근 3개만
               if (job.status === 'processing') {
                 try {
-                  const statusResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/status`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                  });
+                  const statusResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/status`);
                   return { ...job, ...statusResponse.data };
                 } catch (e) {
                   return job;
@@ -194,9 +228,7 @@ const InputBox = () => {
               
               if (job.status === 'completed') {
                 try {
-                  const resultResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/result`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                  });
+                  const resultResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/result`);
                   return { ...job, result: resultResponse.data };
                 } catch (e) {
                   return job;
@@ -210,13 +242,17 @@ const InputBox = () => {
         }
       } catch (error) {
         console.error('YouTube Reporter 작업 확인 실패:', error);
+        if (error.response?.status === 401) {
+          setIsLoggedIn(false);
+          localStorage.removeItem('access_token');
+        }
       }
     };
 
     fetchYoutubeReporterJobs();
     const interval = setInterval(fetchYoutubeReporterJobs, 5000); // 5초마다 확인
     return () => clearInterval(interval);
-  }, []);
+  }, [isLoggedIn]);
 
   const handleSubmit = async (input) => {
     setLoading(true);

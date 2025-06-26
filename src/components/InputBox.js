@@ -168,17 +168,24 @@ const InputBox = () => {
   const [youtubeReporterJobs, setYoutubeReporterJobs] = useState([]);
   const navigate = useNavigate();
 
-  // YouTube Reporter 작업 상태 확인
+  // YouTube Reporter 작업 상태 확인 (로그인 상태에서만)
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return; // 로그인하지 않은 경우 API 호출 안함
+
     const fetchYoutubeReporterJobs = async () => {
       try {
-        const response = await axios.get('/youtube-reporter/jobs');
+        const response = await axios.get('/youtube-reporter/jobs', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (response.data && response.data.jobs) {
           const jobsWithStatus = await Promise.all(
             response.data.jobs.slice(0, 3).map(async (job) => { // 최근 3개만
               if (job.status === 'processing') {
                 try {
-                  const statusResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/status`);
+                  const statusResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/status`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                   return { ...job, ...statusResponse.data };
                 } catch (e) {
                   return job;
@@ -187,7 +194,9 @@ const InputBox = () => {
               
               if (job.status === 'completed') {
                 try {
-                  const resultResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/result`);
+                  const resultResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/result`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                   return { ...job, result: resultResponse.data };
                 } catch (e) {
                   return job;

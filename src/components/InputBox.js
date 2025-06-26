@@ -380,54 +380,75 @@ const InputBox = () => {
   };
 
   const renderReportContent = (result) => {
-    if (!result || !result.sections) return null;
+    if (!result) return null;
+
+    // 백엔드 응답 구조에 맞게 데이터 추출
+    let reportData = result;
+    if (result.content) {
+      try {
+        reportData = typeof result.content === 'string' ? JSON.parse(result.content) : result.content;
+      } catch (e) {
+        console.warn('리포트 내용 파싱 실패:', e);
+      }
+    }
+
+    // 리포트 데이터에서 섹션 추출
+    const sections = reportData.sections || [];
+    const title = reportData.title || result.title || '분석 결과';
+    const summary = reportData.summary || reportData.executive_summary || '';
 
     return (
       <div style={{ marginTop: '1rem' }}>
-        {result.title && (
-          <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.1rem' }}>{result.title}</h3>
-        )}
+        <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.1rem' }}>{title}</h3>
         
-        {result.summary && (
+        {summary && (
           <div style={{ marginBottom: '1rem' }}>
             <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>📋 요약</h4>
-            <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>{result.summary}</p>
+            <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>
+              {summary.length > 200 ? summary.substring(0, 200) + '...' : summary}
+            </p>
           </div>
         )}
 
-        {result.sections.slice(0, 2).map((section, index) => ( // 처음 2개 섹션만 표시
+        {sections.length > 0 && sections.slice(0, 2).map((section, index) => (
           <div key={index} style={{ marginBottom: '1rem' }}>
-            {section.type === 'text' ? (
+            {section.type === 'paragraph' || section.type === 'text' ? (
               <>
-                <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>{section.title}</h4>
+                <h4 style={{ color: '#eaffb7', marginBottom: '0.5rem', fontSize: '1rem' }}>
+                  {section.title || `섹션 ${index + 1}`}
+                </h4>
                 <p style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', fontSize: '0.9rem' }}>
-                  {section.content.length > 200 ? section.content.substring(0, 200) + '...' : section.content}
+                  {section.content && section.content.length > 200 
+                    ? section.content.substring(0, 200) + '...' 
+                    : section.content || '내용 없음'}
                 </p>
               </>
             ) : section.type === 'visualization' ? (
               <SmartVisualization section={section} />
-            ) : null}
+            ) : (
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>
+                {JSON.stringify(section, null, 2).substring(0, 200)}...
+              </div>
+            )}
           </div>
         ))}
 
-        {result.sections.length > 2 && (
-          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <button 
-              onClick={() => navigate('/reports')}
-              style={{
-                background: '#eaffb7',
-                color: '#7e7e00',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              전체 리포트 보기
-            </button>
-          </div>
-        )}
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <button 
+            onClick={() => navigate('/reports')}
+            style={{
+              background: '#eaffb7',
+              color: '#7e7e00',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            전체 리포트 보기
+          </button>
+        </div>
       </div>
     );
   };

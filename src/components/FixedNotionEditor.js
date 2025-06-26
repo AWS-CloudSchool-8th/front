@@ -334,26 +334,32 @@ const FixedNotionEditor = () => {
   const convertAnalysisToBlocks = useCallback((analysisData) => {
     const blocks = [];
     let blockId = 1;
-
+    
+    // 백엔드 응답 구조에 맞게 데이터 추출
+    let finalOutput = analysisData.final_output;
+    if (typeof finalOutput === 'string') {
+      try {
+        finalOutput = JSON.parse(finalOutput);
+      } catch (e) {
+        console.warn('분석 결과 파싱 실패:', e);
+      }
+    }
+    
     // 제목 추가
     blocks.push({
       id: `block_${blockId++}`,
       type: 'heading1',
-      content: '📺 YouTube 영상 분석 결과',
+      content: finalOutput?.title || '📺 YouTube 영상 분석 결과',
       placeholder: ''
     });
 
-    // sections에 이미 youtube 블록이 있는지 확인
-    const hasYoutubeBlock = analysisData.final_output?.sections?.some(
-      section => section.type === 'youtube'
-    );
-
-    // YouTube URL 추가 (중복 방지)
-    if (analysisData.final_output?.youtube_url && !hasYoutubeBlock) {
+    // YouTube URL 추가
+    const youtubeUrl = analysisData.youtube_url || finalOutput?.youtube_url;
+    if (youtubeUrl) {
       blocks.push({
         id: `block_${blockId++}`,
         type: 'youtube',
-        content: analysisData.final_output.youtube_url,
+        content: youtubeUrl,
         placeholder: ''
       });
     }
@@ -365,15 +371,59 @@ const FixedNotionEditor = () => {
       content: '📋 영상 요약',
       placeholder: ''
     });
+    
+    // 요약 내용 추가
+    const summary = finalOutput?.summary || finalOutput?.executive_summary;
+    if (summary) {
+      blocks.push({
+        id: `block_${blockId++}`,
+        type: 'paragraph',
+        content: summary,
+        placeholder: ''
+      });
+    }
 
     // 분석 결과의 각 섹션을 마크다운으로 파싱
-    if (analysisData.final_output?.sections) {
-      analysisData.final_output.sections.forEach(section => {
-        const parsedBlocks = parseMarkdownToBlocks(section.content);
-        blocks.push(...parsedBlocks.map(block => ({
-          ...block,
-          id: `block_${blockId++}`
-        })));
+    const sections = finalOutput?.sections || [];
+    if (sections.length > 0) {
+      // 섹션 제목 추가
+      blocks.push({
+        id: `block_${blockId++}`,
+        type: 'heading2',
+        content: '📊 상세 분석',
+        placeholder: ''
+      });
+      
+      sections.forEach(section => {
+        // 섹션 제목 추가
+        if (section.title) {
+          blocks.push({
+            id: `block_${blockId++}`,
+            type: 'heading3',
+            content: section.title,
+            placeholder: ''
+          });
+        }
+        
+        // 섹션 내용 추가
+        if (section.content) {
+          const content = typeof section.content === 'string' ? section.content : JSON.stringify(section.content);
+          const parsedBlocks = parseMarkdownToBlocks(content);
+          blocks.push(...parsedBlocks.map(block => ({
+            ...block,
+            id: `block_${blockId++}`
+          })));
+        }
+        
+        // 시각화 섹션 처리
+        if (section.type === 'visualization') {
+          blocks.push({
+            id: `block_${blockId++}`,
+            type: 'paragraph',
+            content: '<em>시각화 데이터는 에디터에서 직접 표시할 수 없습니다.</em>',
+            placeholder: ''
+          });
+        }
       });
     }
 

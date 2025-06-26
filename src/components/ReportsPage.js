@@ -209,62 +209,83 @@ const ReportsPage = () => {
     const fetchReports = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // 메타데이터 목록 가져오기
-        const response = await axios.get('/reports/list');
-        
-        if (response.data && Array.isArray(response.data)) {
-          // 보고서 데이터 처리
-          const reportsList = response.data.map(report => {
-            // 보고서 내용 추출
-            let preview = '';
-            if (report.content) {
-              try {
-                const content = JSON.parse(report.content);
-                if (content.sections) {
-                  preview = content.sections
-                    .filter(section => section.type === 'paragraph')
-                    .map(section => section.content)
-                    .slice(0, 2)
-                    .join(' ');
-                }
-              } catch (e) {
-                preview = report.content.substring(0, 150) + '...';
-              }
-            }
+        // 1. 먼저 YouTube Reporter 작업 목록 가져오기
+        try {
+          const jobsResponse = await axios.get('/youtube-reporter/jobs');
+          if (jobsResponse.data && jobsResponse.data.jobs) {
+            const completedJobs = jobsResponse.data.jobs.filter(job => job.status === 'completed');
             
-            return {
+            // 완료된 작업들의 결과 가져오기
+            const reportsFromJobs = await Promise.all(
+              completedJobs.map(async (job) => {
+                try {
+                  const resultResponse = await axios.get(`/youtube-reporter/jobs/${job.id}/result`);
+                  const result = resultResponse.data;
+                  
+                  return {
+                    id: job.id,
+                    title: result.title || extractTitleFromKey(job.youtube_url) || 'YouTube 분석 리포트',
+                    type: 'YouTube',
+                    date: job.completed_at || job.created_at,
+                    size: '1.5MB',
+                    preview: result.content?.summary || result.content?.executive_summary || '분석 결과를 확인하세요.',
+                    hasAudio: job.include_audio || false,
+                    downloadUrl: result.download_url,
+                    youtubeUrl: job.youtube_url,
+                    metadata: result.metadata || {},
+                    resultData: result.content // 실제 리포트 데이터
+                  };
+                } catch (e) {
+                  console.warn(`작업 ${job.id} 결과 가져오기 실패:`, e);
+                  return null;
+                }
+              })
+            );
+            
+            const validReports = reportsFromJobs.filter(report => report !== null);
+            if (validReports.length > 0) {
+              setReports(validReports);
+              return;
+            }
+          }
+        } catch (jobsErr) {
+          console.warn('YouTube Reporter 작업 목록 가져오기 실패:', jobsErr);
+        }
+        
+        // 2. 백업: 기존 reports API 시도
+        try {
+          const response = await axios.get('/reports/list');
+          
+          if (response.data && Array.isArray(response.data)) {
+            const reportsList = response.data.map(report => ({
               id: report.key || report.id,
               title: report.title || extractTitleFromKey(report.key) || '제목 없음',
               type: report.type || 'YouTube',
               date: report.last_modified || report.created_at || new Date().toISOString(),
               size: formatFileSize(report.size) || '1.5MB',
-              preview: preview || '보고서 내용을 불러올 수 없습니다.',
+              preview: '보고서 내용을 확인하세요.',
               hasAudio: report.has_audio || false,
               downloadUrl: report.url || report.s3_url,
               youtubeUrl: report.youtube_url || '',
               metadata: report.metadata || {}
-            };
-          });
-          
-          // 최신순 정렬
-          reportsList.sort((a, b) => new Date(b.date) - new Date(a.date));
-          
-          setReports(reportsList);
-        } else {
-          // 백엔드 API가 없는 경우 S3에서 직접 가져오기 시도
-          await fetchReportsFromS3();
+            }));
+            
+            reportsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setReports(reportsList);
+            return;
+          }
+        } catch (reportsErr) {
+          console.warn('Reports API 실패:', reportsErr);
         }
+        
+        // 3. 최후 수단: 더미 데이터
+        setReports([]);
+        
       } catch (err) {
         console.error('보고서 목록 가져오기 실패:', err);
-        
-        // 백엔드 API 실패 시 S3에서 직접 가져오기 시도
-        try {
-          await fetchReportsFromS3();
-        } catch (s3Err) {
-          setError('보고서 목록을 가져오는데 실패했습니다.');
-          console.error('S3에서 보고서 가져오기 실패:', s3Err);
-        }
+        setError('보고서 목록을 가져오는데 실패했습니다. 네트워크 연결을 확인해주세요.');
       } finally {
         setLoading(false);
       }
@@ -394,46 +415,82 @@ const ReportsPage = () => {
 
   const handleReportClick = async (report) => {
     try {
-      // 보고서 URL이 있으면 해당 URL에서 데이터 가져오기
-      if (report.downloadUrl) {
-        const response = await axios.get(report.downloadUrl);
-        
-        if (response.data) {
-          navigate('/editor', { 
-            state: { 
-              analysisData: {
-                youtube_url: report.youtubeUrl,
-                final_output: response.data
-              }
-            } 
-          });
-          return;
+      // 1. 이미 로드된 결과 데이터가 있으면 사용
+      if (report.resultData) {
+        navigate('/editor', { 
+          state: { 
+            analysisData: {
+              youtube_url: report.youtubeUrl,
+              final_output: report.resultData
+            }
+          } 
+        });
+        return;
+      }
+      
+      // 2. YouTube Reporter 결과 API로 다시 시도
+      if (report.id) {
+        try {
+          const resultResponse = await axios.get(`/youtube-reporter/jobs/${report.id}/result`);
+          if (resultResponse.data && resultResponse.data.content) {
+            navigate('/editor', { 
+              state: { 
+                analysisData: {
+                  youtube_url: report.youtubeUrl,
+                  final_output: resultResponse.data.content
+                }
+              } 
+            });
+            return;
+          }
+        } catch (apiErr) {
+          console.warn('YouTube Reporter API 실패:', apiErr);
         }
       }
       
-      // URL이 없거나 가져오기 실패한 경우 기본 데이터로 이동
+      // 3. 다운로드 URL로 시도 (CORS 문제 가능성 있음)
+      if (report.downloadUrl && !report.downloadUrl.includes('s3.amazonaws.com')) {
+        try {
+          const response = await axios.get(report.downloadUrl);
+          if (response.data) {
+            navigate('/editor', { 
+              state: { 
+                analysisData: {
+                  youtube_url: report.youtubeUrl,
+                  final_output: response.data
+                }
+              } 
+            });
+            return;
+          }
+        } catch (urlErr) {
+          console.warn('다운로드 URL 접근 실패:', urlErr);
+        }
+      }
+      
+      // 4. 기본 데이터로 이동
       navigate('/editor', { 
         state: { 
           analysisData: { 
+            youtube_url: report.youtubeUrl,
             final_output: { 
-              sections: [{ content: `${report.title}에 대한 분석 결과입니다.` }] 
+              title: report.title,
+              summary: report.preview,
+              sections: [
+                {
+                  type: 'paragraph',
+                  title: '분석 결과',
+                  content: report.preview || `${report.title}에 대한 분석 결과입니다.`
+                }
+              ]
             } 
           } 
         } 
       });
+      
     } catch (err) {
       console.error('보고서 데이터 가져오기 실패:', err);
-      
-      // 오류 발생 시 기본 데이터로 이동
-      navigate('/editor', { 
-        state: { 
-          analysisData: { 
-            final_output: { 
-              sections: [{ content: `${report.title}에 대한 분석 결과입니다.` }] 
-            } 
-          } 
-        } 
-      });
+      alert('보고서를 불러오는데 실패했습니다. 다시 시도해주세요.');
     }
   };
 

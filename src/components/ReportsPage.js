@@ -230,7 +230,7 @@ const ReportsPage = () => {
                     type: 'YouTube',
                     date: job.completed_at || job.created_at,
                     size: '1.5MB',
-                    preview: result.content?.summary || result.content?.executive_summary || '분석 결과를 확인하세요.',
+                    preview: result.content?.summary || result.content?.summary_brief || result.content?.executive_summary || '분석 결과를 확인하세요.',
                     hasAudio: job.include_audio || false,
                     downloadUrl: result.download_url,
                     youtubeUrl: job.youtube_url,

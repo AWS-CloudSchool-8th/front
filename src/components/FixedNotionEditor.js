@@ -373,7 +373,7 @@ const FixedNotionEditor = () => {
     });
     
     // 요약 내용 추가
-    const summary = finalOutput?.summary || finalOutput?.executive_summary;
+    const summary = finalOutput?.summary || finalOutput?.summary_brief || finalOutput?.executive_summary;
     if (summary) {
       blocks.push({
         id: `block_${blockId++}`,

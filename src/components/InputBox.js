@@ -395,7 +395,7 @@ const InputBox = () => {
     // 리포트 데이터에서 섹션 추출
     const sections = reportData.sections || [];
     const title = reportData.title || result.title || '분석 결과';
-    const summary = reportData.summary || reportData.executive_summary || '';
+    const summary = reportData.summary || reportData.summary_brief || reportData.executive_summary || '';
 
     return (
       <div style={{ marginTop: '1rem' }}>

@@ -250,7 +250,15 @@ const InputBox = () => {
     };
 
     fetchYoutubeReporterJobs();
-    const interval = setInterval(fetchYoutubeReporterJobs, 5000); // 5초마다 확인
+    
+    // 진행 중인 작업이 있을 때만 폴링
+    const interval = setInterval(() => {
+      const hasProcessingJobs = youtubeReporterJobs.some(job => job.status === 'processing');
+      if (hasProcessingJobs) {
+        fetchYoutubeReporterJobs();
+      }
+    }, 10000); // 10초마다 확인
+    
     return () => clearInterval(interval);
   }, [isLoggedIn]);
 

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { colors } from '../styles/colors';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const Overlay = styled.div`
   position: fixed;

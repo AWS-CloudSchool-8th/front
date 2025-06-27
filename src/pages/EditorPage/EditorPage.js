@@ -10,7 +10,7 @@ import SmartVisualization from '../../components/SmartVisualization/SmartVisuali
 
 // ====== [테스트용 JSON 데이터 불러오기] ======
 // 아래 주석을 해제하면 test.json의 report 데이터로 EditorPage를 테스트할 수 있습니다.
-const testReport = require('./test.json').report;
+// const testReport = require('./test.json').report;
 
 const EditorPage = () => {
   const location = useLocation();
@@ -280,7 +280,7 @@ const EditorPage = () => {
     }
     // ====== [테스트용 JSON 데이터 적용] ======
     // 아래 주석을 해제하면 test.json의 report 데이터로 EditorPage를 테스트할 수 있습니다.
-      setReport(testReport);
+    // setReport(testReport);
     return () => {
       document.removeEventListener('selectionchange', handleSelection);
     };

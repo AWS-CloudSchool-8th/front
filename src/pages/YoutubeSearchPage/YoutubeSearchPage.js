@@ -78,7 +78,7 @@ const YoutubeSearchPage = () => {
     setSummaryLoading(prev => ({ ...prev, [videoId]: true }));
     try {
       const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const response = await axios.post('/youtube/analysis', { youtube_url: youtubeUrl });
+      const response = await axios.post('/youtube-reporter/analyze', { youtube_url: youtubeUrl });
       if (response.data.analysis_results?.fsm_analysis?.final_output) {
         const analysisData = response.data.analysis_results.fsm_analysis;
         navigate('/editor', {

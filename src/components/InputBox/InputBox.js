@@ -33,7 +33,7 @@ const InputBox = () => {
         });
       } else if (/^https?:\/\//.test(input)) {
         if (/(youtube\.com|youtu\.be)/.test(input)) {
-          response = await axios.post('/youtube/analysis', { youtube_url: input });
+          response = await axios.post('/youtube-reporter/analyze', { youtube_url: input });
         } else {
           response = await axios.post('/youtube/search', { query: input });
         }

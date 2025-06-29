@@ -3,7 +3,7 @@ name: Deploy React App to S3
 on:
   push:
     branches:
-      - v1 # main 브랜치에 push될 때만 배포
+      - deploy # main 브랜치에 push될 때만 배포
 
 jobs:
   deploy:

@@ -61,7 +61,7 @@ const EditorPage = () => {
         selection.addRange(range);
       }
     }, 0);
-  }, []);
+  }, [updateBlockType]);
 
   // --- updateBlockContent ---
   const updateBlockContent = useCallback((blockId, newContent) => {

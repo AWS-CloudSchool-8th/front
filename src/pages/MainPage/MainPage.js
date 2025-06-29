@@ -5,13 +5,12 @@ import Footer from '../../components/Footer/Footer';
 import styles from './MainPage.module.css';
 import Orb from '../../components/Orb/Orb';
 import Aurora from '../../components/Aurora/Aurora';
-import MetallicPaint, { parseLogoImage } from '../../components/MetallicPaint/MetallicPaint';
+import  { parseLogoImage } from '../../components/MetallicPaint/MetallicPaint';
 import logo from '../../assets/logos/react-bits-logo-small-black.svg';
 import ClickSpark from '../../components/ClickSpark/ClickSpark'
 
 const MainPage = () => {
   const [imageData, setImageData] = useState(null);
-  const [velocity, setVelocity] = useState(1.0);
   const containerRef = useRef(null);
 
   useEffect(() => {

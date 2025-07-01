@@ -18,13 +18,28 @@ const InputBox = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const token = localStorage.getItem("access_token");
 
   const pollJobStatus = async (jobId) => {
     try {
-      const response = await axios.get(`/youtube/jobs/${jobId}/status`);
+      const response = await axios.get(
+        `/youtube/jobs/${jobId}/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+  
       if (response.data.status === 'completed') {
-        // 완료되면 결과 가져오기
-        const resultResponse = await axios.get(`/youtube/jobs/${jobId}/result`);
+        const resultResponse = await axios.get(
+          `/youtube/jobs/${jobId}/result`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
         if (resultResponse.data.content) {
           navigate('/editor', {
             state: {
@@ -32,17 +47,18 @@ const InputBox = () => {
             }
           });
         }
-        return true; // 완료됨
+        return true;
       } else if (response.data.status === 'failed') {
-        setError('분석이 실패했습니다.');
-        return true; // 완료됨 (실패)
+        setError('��࿡ �����߽��ϴ�.');
+        return true;
       }
-      return false; // 아직 진행 중
+      return false;
     } catch (err) {
-      console.error('상태 확인 실패:', err);
+      console.error('���� Ȯ�� ����:', err);
       return false;
     }
   };
+
 
   const handleSubmit = async (input) => {
     setLoading(true);
@@ -58,13 +74,22 @@ const InputBox = () => {
         });
       } else if (/^https?:\/\//.test(input)) {
         if (/(youtube\.com|youtu\.be)/.test(input)) {
-          response = await axios.post('/youtube/analyze', { youtube_url: input });
-          
-          // YouTube 분석의 경우 비동기 처리
+          response = await axios.post(
+            '/youtube/analysis',
+            { youtube_url: input },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              }
+            }
+          );
+                    
+          // YouTube 분석??경우 비동�?처리
           if (response.data.job_id) {
             const jobId = response.data.job_id;
             
-            // 2초마다 상태 확인
+            // 2초마???�태 ?�인
             const pollInterval = setInterval(async () => {
               const isCompleted = await pollJobStatus(jobId);
               if (isCompleted) {
@@ -73,14 +98,14 @@ const InputBox = () => {
               }
             }, 2000);
             
-            // 5분 후 타임아웃
+            // 5�????�?�아??            
             setTimeout(() => {
               clearInterval(pollInterval);
               setLoading(false);
-              setError('분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.');
+              setError('분석 ?�간??초과?�었?�니?? ?�중???�시 ?�도?�주?�요.');
             }, 300000);
             
-            return; // 여기서 함수 종료 (폴링이 계속됨)
+            return; // ?�기???�수 종료 (?�링??계속??
           }
         } else {
           response = await axios.post('/youtube/search', { query: input });
@@ -91,7 +116,7 @@ const InputBox = () => {
       
       setResult(response.data);
       
-      // YouTube 분석 결과가 있으면 에디터로 이동 (기존 동기 처리용)
+      // YouTube 분석 결과가 ?�으�??�디?�로 ?�동 (기존 ?�기 처리??
       if (response.data.analysis_results?.fsm_analysis?.final_output) {
         const analysisData = response.data.analysis_results.fsm_analysis;
         navigate('/editor', { 
@@ -101,9 +126,9 @@ const InputBox = () => {
         });
       }
     } catch (err) {
-      setError(err.message || '에러 발생');
+      setError(err.message || '?�러 발생');
     } finally {
-      // YouTube 분석이 아닌 경우에만 로딩 해제
+      // YouTube 분석???�닌 경우?�만 로딩 ?�제
       if (!/(youtube\.com|youtu\.be)/.test(input)) {
         setLoading(false);
       }
@@ -167,7 +192,7 @@ const InputBox = () => {
         )}
         <input
           className={styles.input}
-          placeholder="텍스트, 파일, 또는 URL 입력"
+          placeholder="?�스?? ?�일, ?�는 URL ?�력"
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') handleInput(); }}
@@ -180,11 +205,18 @@ const InputBox = () => {
           onChange={handleFileChange}
         />
         <label htmlFor="file-upload" className={styles.fileLabel}>
-          <span className={styles.arrowButton} title="파일 첨부">📎</span>
+          <span className={styles.arrowButton} title="?�일 첨�?">?��</span>
         </label>
-        <button className={styles.arrowButton} onClick={handleInput} title="전송">→</button>
+        <button
+          className={styles.arrowButton}
+          onClick={handleInput}
+          title="����"
+        >
+          ����
+        </button>
+
       </div>
-      {loading && <div className={styles.loading}>YouTube 영상을 분석 중입니다... (2-5분 소요)</div>}
+      {loading && <div className={styles.loading}>YouTube ?�상??분석 중입?�다... (2-5�??�요)</div>}
       {error && <div className={styles.error}>{error}</div>}
       {result && (
         <div className={styles.result}>

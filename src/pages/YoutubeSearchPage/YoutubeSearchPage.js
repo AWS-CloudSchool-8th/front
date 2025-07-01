@@ -103,7 +103,7 @@ const YoutubeSearchPage = () => {
     setSummaryLoading(prev => ({ ...prev, [videoId]: true }));
     try {
       const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const response = await axios.post('/youtube/analyze', { youtube_url: youtubeUrl });
+      const response = await axios.post('/youtube/analysis', { youtube_url: youtubeUrl });
       
       if (response.data.job_id) {
         // 작업이 시작되었으면 상태를 폴링
